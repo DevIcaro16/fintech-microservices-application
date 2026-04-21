@@ -2,8 +2,8 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 import type { TransferEvent } from "../domain/types";
 
 // Mocks
-const broadcastMock = mock(() => {});
-const saveMock = mock(async () => {});
+const broadcastMock = mock(() => { });
+const saveMock = mock(async () => { });
 
 mock.module("../websocket/manager", () => ({ broadcast: broadcastMock }));
 mock.module("../dynamo/notificationRepo", () => ({ saveNotification: saveMock }));
@@ -56,6 +56,6 @@ describe("Kafka handlers", () => {
   it("handleTransferFailed saves one DynamoDB record for source", async () => {
     await handleTransferFailed(failedEvent);
     expect(saveMock).toHaveBeenCalledTimes(1);
-    expect(saveMock.mock.calls[0][0].user_id).toBe("acc-src");
+    expect((saveMock.mock.calls as any[][])[0][0].user_id).toBe("acc-src");
   });
 });
