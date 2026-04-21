@@ -47,4 +47,10 @@ describe("WebSocket Manager", () => {
   it("broadcast to unknown transferId does nothing", () => {
     expect(() => broadcast("unknown", { status: "OK" })).not.toThrow();
   });
+
+  it("connectionCount aggregates across multiple transferIds", () => {
+    register("tx-1", fakeWs([]) as any);
+    register("tx-2", fakeWs([]) as any);
+    expect(connectionCount()).toBe(2);
+  });
 });
