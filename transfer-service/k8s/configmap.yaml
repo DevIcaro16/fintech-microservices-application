@@ -4,6 +4,5 @@ metadata:
   name: transfer-service-config
   namespace: fintech
 data:
-  DB_URL: "r2dbc:postgresql://transferuser:transferpass@transfer-postgres:5432/transferdb"
   KAFKA_BOOTSTRAP: "fintech-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
   DYNAMODB_ENDPOINT: "http://dynamodb-local.data.svc.cluster.local:8000"

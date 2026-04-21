@@ -28,6 +28,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: transfer-service-config
+            - secretRef:
+                name: transfer-service-secret
           readinessProbe:
             httpGet:
               path: /actuator/health

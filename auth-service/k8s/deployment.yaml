@@ -28,12 +28,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: auth-service-config
-          env:
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: auth-service-secret
-                  key: JWT_SECRET
+            - secretRef:
+                name: auth-service-secret
           readinessProbe:
             httpGet:
               path: /healthz

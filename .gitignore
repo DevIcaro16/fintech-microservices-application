@@ -1,3 +1,6 @@
+# Docs / planning (local only)
+docs/
+
 # Binaries / tooling local
 docker-machine-driver-kvm2
 

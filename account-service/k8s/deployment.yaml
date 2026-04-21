@@ -28,6 +28,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: account-service-config
+            - secretRef:
+                name: account-service-secret
           readinessProbe:
             httpGet:
               path: /actuator/health

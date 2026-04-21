@@ -4,7 +4,5 @@ metadata:
   name: account-service-config
   namespace: fintech
 data:
-  SHARD0_URL: "r2dbc:postgresql://accountuser:accountpass@account-postgres-shard0:5432/accountdb"
-  SHARD1_URL: "r2dbc:postgresql://accountuser:accountpass@account-postgres-shard1:5432/accountdb"
   REDIS_CLUSTER_NODES: "redis-cluster-0.redis-cluster.data.svc.cluster.local:6379,redis-cluster-1.redis-cluster.data.svc.cluster.local:6379,redis-cluster-2.redis-cluster.data.svc.cluster.local:6379"
   KAFKA_BOOTSTRAP: "fintech-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
