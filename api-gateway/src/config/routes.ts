@@ -10,6 +10,7 @@ const NOTIFICATION_SERVICE =
 export const PUBLIC_ROUTES = new Set([
   "POST /auth/login",
   "POST /auth/refresh",
+  "GET /ws",
 ]);
 
 export const UPSTREAM_MAP: Record<string, string> = {
