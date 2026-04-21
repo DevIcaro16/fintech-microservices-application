@@ -74,7 +74,10 @@ public class TransferService implements TransferUseCase {
                             .then(scheduleNotification(updated, "COMPLETED"))
                             .then(publishEvent("transfer-completed", transferId, Map.of(
                                 "transfer_id", transferId,
-                                "status", "COMPLETED"
+                                "status", "COMPLETED",
+                                "source_account_id", updated.getSourceAccountId(),
+                                "destination_account_id", updated.getDestinationAccountId(),
+                                "amount", updated.getAmount().toPlainString()
                             )))
                     );
             });
@@ -91,7 +94,10 @@ public class TransferService implements TransferUseCase {
                             .then(scheduleNotification(updated, "FAILED"))
                             .then(publishEvent("transfer-failed", transferId, Map.of(
                                 "transfer_id", transferId,
-                                "status", "FAILED"
+                                "status", "FAILED",
+                                "source_account_id", updated.getSourceAccountId(),
+                                "destination_account_id", updated.getDestinationAccountId(),
+                                "amount", updated.getAmount().toPlainString()
                             )))
                     );
             });
@@ -109,7 +115,10 @@ public class TransferService implements TransferUseCase {
                             .then(scheduleNotification(updated, "FAILED"))
                             .then(publishEvent("transfer-failed", transferId, Map.of(
                                 "transfer_id", transferId,
-                                "status", "FAILED"
+                                "status", "FAILED",
+                                "source_account_id", updated.getSourceAccountId(),
+                                "destination_account_id", updated.getDestinationAccountId(),
+                                "amount", updated.getAmount().toPlainString()
                             )))
                     );
             });
