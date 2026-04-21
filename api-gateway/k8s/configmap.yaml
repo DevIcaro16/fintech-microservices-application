@@ -6,3 +6,6 @@ metadata:
 data:
   PORT: "3000"
   AUTH_SERVICE_URL: "http://auth-service.fintech.svc.cluster.local"
+  ACCOUNT_SERVICE_URL: "http://account-service.fintech.svc.cluster.local"
+  TRANSFER_SERVICE_URL: "http://transfer-service.fintech.svc.cluster.local"
+  NOTIFICATION_SERVICE_URL: "http://notification-service.fintech.svc.cluster.local"

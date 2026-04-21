@@ -37,6 +37,11 @@ public class KafkaTransferEventConsumer {
         handle(record, ack, transferId -> useCase.onDebitFailed(transferId).block());
     }
 
+    @KafkaListener(topics = "credit-failed", groupId = "transfer-service")
+    public void onCreditFailed(ConsumerRecord<String, String> record, Acknowledgment ack) {
+        handle(record, ack, transferId -> useCase.onCreditFailed(transferId).block());
+    }
+
     @KafkaListener(topics = "debit-reversal", groupId = "transfer-service")
     public void onDebitReversal(ConsumerRecord<String, String> record, Acknowledgment ack) {
         handle(record, ack, transferId -> useCase.onDebitReversal(transferId).block());

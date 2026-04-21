@@ -104,6 +104,26 @@ public class TransferService implements TransferUseCase {
     }
 
     @Override
+    public Mono<Void> onCreditFailed(String transferId) {
+        return transferRepo.findById(transferId)
+            .flatMap(t -> {
+                if (!t.canTransitionTo(TransferStatus.FAILED)) return Mono.empty();
+                return transferRepo.updateStatus(transferId, TransferStatus.FAILED)
+                    .flatMap(updated ->
+                        historyPort.save(updated)
+                            .then(scheduleNotification(updated, "FAILED"))
+                            .then(publishEvent("transfer-failed", transferId, Map.of(
+                                "transfer_id", transferId,
+                                "status", "FAILED",
+                                "source_account_id", updated.getSourceAccountId(),
+                                "destination_account_id", updated.getDestinationAccountId(),
+                                "amount", updated.getAmount().toPlainString()
+                            )))
+                    );
+            });
+    }
+
+    @Override
     public Mono<Void> onDebitReversal(String transferId) {
         return transferRepo.findById(transferId)
             .flatMap(t -> {
