@@ -12,7 +12,8 @@ controller:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: false
+      enabled: true
+      namespace: monitoring
   config:
     use-forwarded-headers: "true"
     compute-full-forwarded-for: "true"
