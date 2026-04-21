@@ -39,7 +39,7 @@ public class TransferService implements TransferUseCase {
                 "transfer_id", saved.getId(),
                 "source_account_id", saved.getSourceAccountId(),
                 "destination_account_id", saved.getDestinationAccountId(),
-                "amount", saved.getAmount()
+                "amount", saved.getAmount().toPlainString()
             )).thenReturn(saved));
     }
 
@@ -116,9 +116,9 @@ public class TransferService implements TransferUseCase {
                             .then(publishEvent("transfer-failed", transferId, Map.of(
                                 "transfer_id", transferId,
                                 "status", "FAILED",
-                                "source_account_id", updated.getSourceAccountId(),
-                                "destination_account_id", updated.getDestinationAccountId(),
-                                "amount", updated.getAmount().toPlainString()
+                                "source_account_id", t.getSourceAccountId(),
+                                "destination_account_id", t.getDestinationAccountId(),
+                                "amount", t.getAmount().toPlainString()
                             )))
                     );
             });
