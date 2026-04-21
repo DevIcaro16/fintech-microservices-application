@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: transfer-postgres-secret
+  namespace: fintech
+type: Opaque
+stringData:
+  username: transferuser
+  password: transferpass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: transfer-migrations
+  namespace: fintech
+data:
+  V1__init.sql: |
+    CREATE TABLE IF NOT EXISTS transfers (
+        id                     VARCHAR(36) PRIMARY KEY,
+        source_account_id      VARCHAR(36) NOT NULL,
+        destination_account_id VARCHAR(36) NOT NULL,
+        amount                 NUMERIC(19,2) NOT NULL,
+        status                 VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+        callback_url           TEXT,
+        user_id                VARCHAR(36) NOT NULL,
+        created_at             TIMESTAMPTZ DEFAULT NOW(),
+        updated_at             TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_transfers_user ON transfers(user_id);
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: transfer-postgres
+  namespace: fintech
+spec:
+  serviceName: transfer-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transfer-postgres
+  template:
+    metadata:
+      labels:
+        app: transfer-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: transferdb
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: transfer-postgres-secret
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: transfer-postgres-secret
+                  key: password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: migrations
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: migrations
+          configMap:
+            name: transfer-migrations
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transfer-postgres
+  namespace: fintech
+spec:
+  clusterIP: None
+  selector:
+    app: transfer-postgres
+  ports:
+    - port: 5432
