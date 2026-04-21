@@ -1,6 +1,9 @@
 # Docs / planning (local only)
 docs/
 
+# Visual brainstorming session files
+.superpowers/
+
 # K8s Secrets (never commit real credentials)
 **/k8s/secret.yaml
 
