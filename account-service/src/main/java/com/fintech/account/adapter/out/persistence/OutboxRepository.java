@@ -54,7 +54,7 @@ public class OutboxRepository implements OutboxPort {
     @Override
     public Flux<OutboxEntry> findUnpublished(int shard, int limit) {
         return templateFor(shard).getDatabaseClient()
-            .sql("SELECT id, aggregate_id, event_type, payload, created_at FROM outbox WHERE published = false ORDER BY created_at LIMIT :limit")
+            .sql("SELECT id, aggregate_id, event_type, payload, created_at FROM outbox WHERE published = false ORDER BY created_at LIMIT :limit FOR UPDATE SKIP LOCKED")
             .bind("limit", limit)
             .map(r -> new OutboxEntry(
                 r.get("id", UUID.class),
