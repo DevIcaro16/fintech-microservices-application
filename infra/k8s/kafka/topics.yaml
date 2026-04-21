@@ -1,0 +1,111 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: transfer-requested
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: debit-completed
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: debit-failed
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: credit-completed
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: credit-failed
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: transfer-completed
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: transfer-failed
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: debit-reversal
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: fintech-kafka
+spec:
+  partitions: 3
+  replicas: 1
+  config:
+    retention.ms: "604800000"
+    cleanup.policy: delete
