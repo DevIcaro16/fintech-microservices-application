@@ -100,7 +100,7 @@ apply_dir "$REPO_ROOT/infra/k8s/monitoring" "Monitoring"
 
 # ─── Microservices ───────────────────────────────────────────────────────────
 
-for svc in auth-service account-service transfer-service notification-service api-gateway; do
+for svc in auth-service account-service transfer-service notification-service api-gateway frontend-service; do
   apply_dir "$REPO_ROOT/$svc/k8s" "$svc"
 done
 
