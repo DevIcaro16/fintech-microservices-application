@@ -1,12 +1,13 @@
 package com.fintech.account.application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fintech.account.domain.Account;
 import com.fintech.account.domain.Money;
+import com.fintech.account.domain.OutboxEntry;
 import com.fintech.account.port.in.AccountUseCase;
 import com.fintech.account.port.out.AccountPort;
 import com.fintech.account.port.out.CachePort;
-import com.fintech.account.port.out.EventPort;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fintech.account.port.out.OutboxPort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -17,13 +18,13 @@ public class AccountService implements AccountUseCase {
 
     private final AccountPort accountPort;
     private final CachePort cachePort;
-    private final EventPort eventPort;
+    private final OutboxPort outboxPort;
     private final ObjectMapper mapper;
 
-    public AccountService(AccountPort accountPort, CachePort cachePort, EventPort eventPort, ObjectMapper mapper) {
+    public AccountService(AccountPort accountPort, CachePort cachePort, OutboxPort outboxPort, ObjectMapper mapper) {
         this.accountPort = accountPort;
         this.cachePort = cachePort;
-        this.eventPort = eventPort;
+        this.outboxPort = outboxPort;
         this.mapper = mapper;
     }
 
@@ -31,7 +32,13 @@ public class AccountService implements AccountUseCase {
     public Mono<Account> createAccount(String ownerId, Money initialBalance) {
         Account account = Account.create(ownerId, initialBalance);
         return accountPort.save(account)
-            .flatMap(saved -> cachePort.put(saved).thenReturn(saved));
+            .flatMap(saved ->
+                outboxEntry("account.created", saved.getId(),
+                    Map.of("account_id", saved.getId(), "owner_id", saved.getOwnerId()))
+                    .flatMap(entry -> outboxPort.save(saved.getId(), entry))
+                    .then(cachePort.put(saved))
+                    .thenReturn(saved)
+            );
     }
 
     @Override
@@ -60,18 +67,20 @@ public class AccountService implements AccountUseCase {
                         try {
                             account.debit(amount);
                         } catch (Account.InsufficientFundsException e) {
-                            return publishEvent("debit.failed", accountId,
+                            return outboxEntry("debit.failed", accountId,
                                 Map.of("account_id", accountId, "transfer_id", transferId,
                                        "reason", "insufficient_funds"))
+                                .flatMap(entry -> outboxPort.save(accountId, entry))
                                 .then(Mono.error(e));
                         }
                         return accountPort.save(account)
                             .flatMap(saved ->
                                 accountPort.saveTransferIdempotency(accountId, transferId)
-                                    .then(cachePort.put(saved))
-                                    .then(publishEvent("debit.completed", accountId,
+                                    .then(outboxEntry("debit.completed", accountId,
                                         Map.of("account_id", accountId, "transfer_id", transferId,
                                                "new_balance", saved.getBalance().amount())))
+                                    .flatMap(entry -> outboxPort.save(accountId, entry))
+                                    .then(cachePort.put(saved))
                                     .thenReturn(saved)
                             );
                     });
@@ -90,22 +99,21 @@ public class AccountService implements AccountUseCase {
                         return accountPort.save(account)
                             .flatMap(saved ->
                                 accountPort.saveTransferIdempotency(accountId, transferId)
-                                    .then(cachePort.put(saved))
-                                    .then(publishEvent("credit.completed", accountId,
+                                    .then(outboxEntry("credit.completed", accountId,
                                         Map.of("account_id", accountId, "transfer_id", transferId,
                                                "new_balance", saved.getBalance().amount())))
+                                    .flatMap(entry -> outboxPort.save(accountId, entry))
+                                    .then(cachePort.put(saved))
                                     .thenReturn(saved)
                             );
                     });
             });
     }
 
-    private Mono<Void> publishEvent(String topic, String key, Map<String, Object> payload) {
-        try {
-            return eventPort.publish(topic, key, mapper.writeValueAsString(payload));
-        } catch (Exception e) {
-            return Mono.error(e);
-        }
+    private Mono<OutboxEntry> outboxEntry(String eventType, String aggregateId, Map<String, Object> payload) {
+        return Mono.fromCallable(() ->
+            new OutboxEntry(aggregateId, eventType, mapper.writeValueAsString(payload))
+        );
     }
 
     public static class AccountNotFoundException extends RuntimeException {
