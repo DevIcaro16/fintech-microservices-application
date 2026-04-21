@@ -1,0 +1,14 @@
+{
+  "name": "api-gateway",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.1.10"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.0"
+  }
+}
