@@ -3,6 +3,7 @@ package com.fintech.account.application;
 import com.fintech.account.domain.Account;
 import com.fintech.account.domain.Money;
 import com.fintech.account.port.out.AccountPort;
+import com.fintech.account.port.out.CachePort;
 import com.fintech.account.port.out.EventPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -17,8 +18,9 @@ import static org.mockito.Mockito.*;
 class AccountServiceTest {
 
     private final AccountPort accountPort = mock(AccountPort.class);
+    private final CachePort cachePort = mock(CachePort.class);
     private final EventPort eventPort = mock(EventPort.class);
-    private final AccountService service = new AccountService(accountPort, eventPort, new ObjectMapper());
+    private final AccountService service = new AccountService(accountPort, cachePort, eventPort, new ObjectMapper());
 
     @Test
     void debit_shouldReduceBalance_whenFundsAreAvailable() {
@@ -27,6 +29,7 @@ class AccountServiceTest {
         when(accountPort.findById(account.getId())).thenReturn(Mono.just(account));
         when(accountPort.save(any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
         when(accountPort.saveTransferIdempotency(anyString(), anyString())).thenReturn(Mono.empty());
+        when(cachePort.put(any())).thenReturn(Mono.empty());
         when(eventPort.publish(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
 
         StepVerifier.create(service.debit(account.getId(), Money.of(BigDecimal.valueOf(50)), "tx-1"))
@@ -41,6 +44,7 @@ class AccountServiceTest {
         Account account = Account.create("owner-2", Money.of(BigDecimal.valueOf(10)));
         when(accountPort.existsTransfer(anyString(), anyString())).thenReturn(Mono.just(false));
         when(accountPort.findById(account.getId())).thenReturn(Mono.just(account));
+        when(cachePort.put(any())).thenReturn(Mono.empty());
         when(eventPort.publish(eq("debit.failed"), anyString(), anyString())).thenReturn(Mono.empty());
 
         StepVerifier.create(service.debit(account.getId(), Money.of(BigDecimal.valueOf(100)), "tx-2"))
@@ -55,6 +59,7 @@ class AccountServiceTest {
         when(accountPort.findById(account.getId())).thenReturn(Mono.just(account));
         when(accountPort.save(any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
         when(accountPort.saveTransferIdempotency(anyString(), anyString())).thenReturn(Mono.empty());
+        when(cachePort.put(any())).thenReturn(Mono.empty());
         when(eventPort.publish(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
 
         StepVerifier.create(service.credit(account.getId(), Money.of(BigDecimal.valueOf(50)), "tx-3"))

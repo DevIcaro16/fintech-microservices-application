@@ -4,6 +4,7 @@ import com.fintech.account.domain.Account;
 import com.fintech.account.domain.Money;
 import com.fintech.account.port.in.AccountUseCase;
 import com.fintech.account.port.out.AccountPort;
+import com.fintech.account.port.out.CachePort;
 import com.fintech.account.port.out.EventPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,13 @@ import java.util.Map;
 public class AccountService implements AccountUseCase {
 
     private final AccountPort accountPort;
+    private final CachePort cachePort;
     private final EventPort eventPort;
     private final ObjectMapper mapper;
 
-    public AccountService(AccountPort accountPort, EventPort eventPort, ObjectMapper mapper) {
+    public AccountService(AccountPort accountPort, CachePort cachePort, EventPort eventPort, ObjectMapper mapper) {
         this.accountPort = accountPort;
+        this.cachePort = cachePort;
         this.eventPort = eventPort;
         this.mapper = mapper;
     }
@@ -27,13 +30,18 @@ public class AccountService implements AccountUseCase {
     @Override
     public Mono<Account> createAccount(String ownerId, Money initialBalance) {
         Account account = Account.create(ownerId, initialBalance);
-        return accountPort.save(account);
+        return accountPort.save(account)
+            .flatMap(saved -> cachePort.put(saved).thenReturn(saved));
     }
 
     @Override
     public Mono<Account> findById(String accountId) {
-        return accountPort.findById(accountId)
-            .switchIfEmpty(Mono.error(new AccountNotFoundException(accountId)));
+        return cachePort.get(accountId)
+            .switchIfEmpty(
+                accountPort.findById(accountId)
+                    .switchIfEmpty(Mono.error(new AccountNotFoundException(accountId)))
+                    .flatMap(account -> cachePort.put(account).thenReturn(account))
+            );
     }
 
     @Override
@@ -60,6 +68,7 @@ public class AccountService implements AccountUseCase {
                         return accountPort.save(account)
                             .flatMap(saved ->
                                 accountPort.saveTransferIdempotency(accountId, transferId)
+                                    .then(cachePort.put(saved))
                                     .then(publishEvent("debit.completed", accountId,
                                         Map.of("account_id", accountId, "transfer_id", transferId,
                                                "new_balance", saved.getBalance().amount())))
@@ -81,6 +90,7 @@ public class AccountService implements AccountUseCase {
                         return accountPort.save(account)
                             .flatMap(saved ->
                                 accountPort.saveTransferIdempotency(accountId, transferId)
+                                    .then(cachePort.put(saved))
                                     .then(publishEvent("credit.completed", accountId,
                                         Map.of("account_id", accountId, "transfer_id", transferId,
                                                "new_balance", saved.getBalance().amount())))
