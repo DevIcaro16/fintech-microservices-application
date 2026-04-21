@@ -33,7 +33,7 @@ public class AccountService implements AccountUseCase {
         Account account = Account.create(ownerId, initialBalance);
         return accountPort.save(account)
             .flatMap(saved ->
-                outboxEntry("account.created", saved.getId(),
+                outboxEntry("account-created", saved.getId(),
                     Map.of("account_id", saved.getId(), "owner_id", saved.getOwnerId()))
                     .flatMap(entry -> outboxPort.save(saved.getId(), entry))
                     .then(cachePort.put(saved))
@@ -67,7 +67,7 @@ public class AccountService implements AccountUseCase {
                         try {
                             account.debit(amount);
                         } catch (Account.InsufficientFundsException e) {
-                            return outboxEntry("debit.failed", accountId,
+                            return outboxEntry("debit-failed", accountId,
                                 Map.of("account_id", accountId, "transfer_id", transferId,
                                        "reason", "insufficient_funds"))
                                 .flatMap(entry -> outboxPort.save(accountId, entry))
@@ -76,7 +76,7 @@ public class AccountService implements AccountUseCase {
                         return accountPort.save(account)
                             .flatMap(saved ->
                                 accountPort.saveTransferIdempotency(accountId, transferId)
-                                    .then(outboxEntry("debit.completed", accountId,
+                                    .then(outboxEntry("debit-completed", accountId,
                                         Map.of("account_id", accountId, "transfer_id", transferId,
                                                "new_balance", saved.getBalance().amount())))
                                     .flatMap(entry -> outboxPort.save(accountId, entry))
@@ -99,7 +99,7 @@ public class AccountService implements AccountUseCase {
                         return accountPort.save(account)
                             .flatMap(saved ->
                                 accountPort.saveTransferIdempotency(accountId, transferId)
-                                    .then(outboxEntry("credit.completed", accountId,
+                                    .then(outboxEntry("credit-completed", accountId,
                                         Map.of("account_id", accountId, "transfer_id", transferId,
                                                "new_balance", saved.getBalance().amount())))
                                     .flatMap(entry -> outboxPort.save(accountId, entry))
