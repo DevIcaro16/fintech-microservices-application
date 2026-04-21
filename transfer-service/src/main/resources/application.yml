@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: transfer-service
+  r2dbc:
+    url: ${DB_URL:r2dbc:postgresql://transferuser:transferpass@transfer-postgres:5432/transferdb}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:fintech-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092}
+    consumer:
+      group-id: transfer-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+dynamodb:
+  endpoint: ${DYNAMODB_ENDPOINT:http://dynamodb-local.data.svc.cluster.local:8000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  pattern:
+    console: '{"ts":"%d{ISO8601}","level":"%p","service":"transfer-service","trace_id":"%X{traceId}","msg":"%m"}%n'
