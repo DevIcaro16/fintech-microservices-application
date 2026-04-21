@@ -1,5 +1,3 @@
-import React from "react";
-
 export type Transfer = {
   transfer_id: string;
   status: "PENDING" | "COMPLETED" | "FAILED";

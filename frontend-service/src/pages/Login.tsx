@@ -1,5 +1,3 @@
-import React from "react";
-
 type Props = { error?: string };
 
 export default function Login({ error }: Props) {

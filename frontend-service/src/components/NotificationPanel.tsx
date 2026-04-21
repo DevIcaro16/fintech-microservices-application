@@ -1,4 +1,3 @@
-import React from "react";
 import type { WSPayload } from "../lib/ws";
 
 type Props = {
