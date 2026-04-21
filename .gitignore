@@ -1,6 +1,9 @@
 # Docs / planning (local only)
 docs/
 
+# K8s Secrets (never commit real credentials)
+**/k8s/secret.yaml
+
 # Binaries / tooling local
 docker-machine-driver-kvm2
 
