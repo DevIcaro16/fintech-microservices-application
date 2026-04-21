@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+  namespace: data
+data:
+  redis.conf: |
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    appendonly yes
+    protected-mode no
+    bind 0.0.0.0
+    port 6379
+    cluster-announce-port 6379
+    cluster-announce-bus-port 16379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: data
+spec:
+  serviceName: redis-cluster
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      initContainers:
+        - name: config-init
+          image: redis:7.4-alpine
+          command:
+            - sh
+            - -c
+            - |
+              # patch cluster-announce-hostname with the pod's hostname
+              cp /etc/redis/redis.conf /data/redis.conf
+              echo "cluster-announce-hostname $(hostname).redis-cluster.data.svc.cluster.local" >> /data/redis.conf
+          volumeMounts:
+            - name: config
+              mountPath: /etc/redis
+            - name: data
+              mountPath: /data
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          command:
+            - redis-server
+            - /data/redis.conf
+          ports:
+            - containerPort: 6379
+              name: client
+            - containerPort: 16379
+              name: gossip
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          readinessProbe:
+            exec:
+              command: [redis-cli, ping]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: [redis-cli, ping]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: redis-cluster-config
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+  namespace: data
+spec:
+  clusterIP: None
+  selector:
+    app: redis-cluster
+  ports:
+    - port: 6379
+      name: client
+    - port: 16379
+      name: gossip
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-access
+  namespace: data
+spec:
+  selector:
+    app: redis-cluster
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
