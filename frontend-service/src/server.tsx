@@ -106,9 +106,13 @@ const app = new Elysia()
     return html(renderToString(<History transfers={transfers} publicApiUrl={PUBLIC_API_URL} />));
   })
 
-  .get("/transfers/new", ({ request }) => {
+  .get("/transfers/new", async ({ request }) => {
     const token = getToken(request.headers.get("cookie"));
     if (!token) return Response.redirect("/login", 302);
+    const userRes = await apiFetch("/auth/validate", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!userRes.ok) return Response.redirect("/login", 302);
     return html(renderToString(<NewTransfer publicApiUrl={PUBLIC_API_URL} />));
   })
 
