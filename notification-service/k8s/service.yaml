@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: fintech
+  labels:
+    app: notification-service
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - name: http-ws
+      port: 80
+      targetPort: 3001
+  type: ClusterIP
